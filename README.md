@@ -18,7 +18,7 @@ Sleepwell is an MVP for a sleep tracking product that leverages AI to analyze sl
    ```
 3. Install required Python packages:
    ```
-   pip install requests
+   pip install -r requirements.txt
    ```
 
 ## Setting up Ollama with qwen3:1.7b
@@ -65,19 +65,19 @@ Quality: 7
 Notes: Had coffee in the afternoon
 ```
 
-## Testing / Example Commands
-To test Sleepwell functionality, you can run example Python scripts or commands that:
-- Load sample sleep data
-- Send prompts to Ollama's `qwen3:1.7b` model
-- Receive and display AI-generated suggestions
+## Logging User Data via Command Line
+Sleepwell supports logging sleep data and generating suggestions directly via command line interface (CLI) commands for ease of use.
 
-Example command to generate suggestions:
+To log sleep data, use a command such as:
 ```
-python generate_suggestions.py --data sample_sleep_data.json
+python log_sleep.py --date 2024-06-01 --start 22:30 --end 06:30 --quality 7 --notes "Had coffee in the afternoon"
 ```
+This command records your sleep details for the specified date.
 
-Replace `generate_suggestions.py` and `sample_sleep_data.json` with your actual script and data file names.
+To generate personalized suggestions based on your logged data, run:
+```
+python generate_suggestions.py --date 2024-06-01
+```
+This will analyze the sleep data for the given date and output AI-generated advice to help improve your sleep quality.
 
----
-
-For more detailed instructions and code examples, please refer to the project documentation or contact the developer.
+Using these CLI commands, you can conveniently manage your sleep logs and receive actionable insights without manually editing JSON files.
