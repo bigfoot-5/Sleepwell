@@ -1,0 +1,38 @@
+{
+    "caffeine_intake_mg": [
+      {
+        "condition": "value > 80",
+        "remedy": "Reduce caffeine intake especially in evening"
+      }
+    ],
+    "alcohol_intake_units": [
+      {
+        "condition": "value > 0.5",
+        "remedy": "Limit alcohol before bedtime"
+      }
+    ],
+    "number_of_wakeups": [
+      {
+        "condition": "value >= 2",
+        "remedy": "Address nighttime interruptions (e.g. reduce fluids at night, relax before bed)"
+      }
+    ],
+    "took_tab2": [
+      {
+        "condition": "not value",
+        "remedy": "Take tab2 as prescribed to help sleep continuity"
+      }
+    ],
+    "nap_duration_minutes": [
+      {
+        "condition": "value > 30",
+        "remedy": "Limit naps to 20–30 min max"
+      }
+    ],
+    "mood_rating": [
+      {
+        "condition": "value < 5",
+        "remedy": "Try relaxation or breathing exercise before bed"
+      }
+    ]
+  }
