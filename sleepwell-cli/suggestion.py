@@ -1,51 +1,44 @@
-# sleepwell-cli/suggestion.py
-from sleepwell_cli.storage import load_and_split_documents, create_vector_store
-from sleepwell_cli.rules_engine import load_rules, apply_rules
-from langchain.chains import RetrievalQA
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain_ollama.llms import OllamaLLM
+from storage import get_log_for_user_date, upsert_log
+from scoring import score_log_entry
+from rules_engine import evaluate_rules_for_entry
 
-def query_ollama(prompt, model="qwen3:1.7b"):
-    """Query the Ollama model."""
-    llm = OllamaLLM(model_name=model)
-    return llm.invoke(prompt)
+import requests
 
-def create_rag_chain(vector_store):
-    """Create a RAG chain."""
-    prompt_template = """
-    You are a helpful assistant. Given the following context, answer the user's question:
+OLLAMA_API_URL = "http://localhost:11434/api/generate"  # or /api/chat depending
+MODEL_NAME = "qwen3:1.7b"
 
-    {context}
+def query_ollama(prompt: str) -> str:
+    payload = {
+        "model": MODEL_NAME,
+        "prompt": prompt,
+        "stream": False
+    }
+    resp = requests.post(OLLAMA_API_URL, json=payload)
+    j = resp.json()
+    # depending on Ollama API version, extract the generated message
+    return j.get("response") or j.get("message", {}).get("content", "")
 
-    User's question: {question}
-    """
-    prompt = PromptTemplate(input_variables=["context", "question"], template=prompt_template)
-    llm_chain = LLMChain(prompt=prompt, llm=query_ollama)
-    return RetrievalQA(combine_docs_chain=llm_chain, retriever=vector_store.as_retriever())
+def generate_suggestions_for(user_id: str, date: str) -> str:
+    """Compute suggestions (remedies) for a specific log entry, return text output."""
+    log = get_log_for_user_date(user_id, date)
+    if log is None:
+        return "No log entry found for that date."
 
-def generate_suggestion(query):
-    """Generate a suggestion based on the user query."""
-    # Load and split documents
-    document_paths = ["data/document1.txt", "data/document2.txt"]
-    documents = load_and_split_documents(document_paths)
-    
-    # Create vector store
-    vector_store = create_vector_store(documents)
-    
-    # Create RAG chain
-    rag_chain = create_rag_chain(vector_store)
-    
-    # Load rules
-    rules = load_rules()
-    
-    # Retrieve relevant documents
-    retrieved_docs = rag_chain.retrieve(query)
-    
-    # Apply rules to retrieved documents
-    for doc in retrieved_docs:
-        doc['content'] = apply_rules(doc['content'], rules)
-    
-    # Generate suggestion
-    suggestion = rag_chain.run(query)
-    return suggestion
+    # 1. compute score
+    score = score_log_entry(log)
+
+    # 2. evaluate rules
+    remedies = evaluate_rules_for_entry(log)
+
+    # 3. Build a prompt for LLM with context + remedies
+    context = f"Log entry: {log}\nDerived remedies: {remedies}\n"
+    prompt = (
+        context +
+        "Using the above log and remedies, generate a concise suggestion to improve sleep quality tonight."
+    )
+    llm_response = query_ollama(prompt)
+    # optionally save suggestions back in log
+    log["suggestions"] = remedies + [llm_response]
+    upsert_log(log)
+
+    return llm_response
