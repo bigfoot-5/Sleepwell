@@ -1,4 +1,10 @@
 import click
+import sys
+import os
+
+# Add parent directory to path so we can import from sleepwell-cli
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from storage import upsert_log
 from suggestion import generate_suggestions_for
 from scoring import score_log_entry
@@ -7,12 +13,20 @@ from scoring import score_log_entry
 def cli():
     pass
 
+def parse_bool(value):
+    """Convert string/number to boolean."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ('true', '1', 'yes', 'on')
+    return bool(value)
+
 @cli.command()
 @click.option('--user', required=True)
 @click.option('--date', required=True)
-@click.option('--took_tab1', type=bool, default=False)
-@click.option('--took_tab2', type=bool, default=False)
-@click.option('--took_tab3', type=bool, default=False)
+@click.option('--took_tab1', default='False', help='True or False')
+@click.option('--took_tab2', default='False', help='True or False')
+@click.option('--took_tab3', default='False', help='True or False')
 @click.option('--caffeine', type=float, default=0.0)
 @click.option('--alcohol', type=float, default=0.0)
 @click.option('--workout', type=float, default=0.0)
@@ -27,6 +41,11 @@ def log(
     caffeine, alcohol, workout, nap, mood,
     sleep_time, outdoor, wakeups, continuity
 ):
+    # Convert string booleans to actual booleans
+    took_tab1 = parse_bool(took_tab1)
+    took_tab2 = parse_bool(took_tab2)
+    took_tab3 = parse_bool(took_tab3)
+    
     entry = {
         "user_id": user,
         "date": date,

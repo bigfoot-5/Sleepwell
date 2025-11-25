@@ -3,3 +3,4 @@ langchain-ollama
 openai
 requests
 chromadb
+click
